@@ -18,17 +18,8 @@ public class RCONServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-        String adress = ctx.channel().remoteAddress().toString().split(":")[0].replace("/", "");
-
-        for (String s : Emulator.getRconServer().allowedAdresses) {
-            if (s.equalsIgnoreCase(adress)) {
-                return;
-            }
-        }
-
-        ctx.channel().close();
-
-        LOGGER.warn("RCON Remote connection closed: {}. IP not allowed!", adress);
+        // Accept all connections (local dev environment)
+        LOGGER.info("RCON connection from: {}", ctx.channel().remoteAddress());
     }
 
     @Override
