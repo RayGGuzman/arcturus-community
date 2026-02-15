@@ -134,6 +134,7 @@ public class Room implements Comparable<Room>, ISerialize, Runnable {
     private final TIntObjectMap<Habbo> habboQueue = TCollections.synchronizedMap(new TIntObjectHashMap<>(0));
     private final TIntObjectMap<Bot> currentBots = TCollections.synchronizedMap(new TIntObjectHashMap<>(0));
     private final TIntObjectMap<Pet> currentPets = TCollections.synchronizedMap(new TIntObjectHashMap<>(0));
+    private int dbUserCount = 0;
     private final THashSet<RoomTrade> activeTrades;
     private final TIntArrayList rights;
     private final TIntIntHashMap mutedHabbos;
@@ -223,6 +224,7 @@ public class Room implements Comparable<Room>, ISerialize, Runnable {
         this.password = set.getString("password");
         this.state = RoomState.valueOf(set.getString("state").toUpperCase());
         this.usersMax = set.getInt("users_max");
+        this.dbUserCount = set.getInt("users");
         this.score = set.getInt("score");
         this.category = set.getInt("category");
         this.floorPaint = set.getString("paper_floor");
@@ -1140,7 +1142,7 @@ public class Room implements Comparable<Room>, ISerialize, Runnable {
 
     private void updateDatabaseUserCount() {
         try (Connection connection = Emulator.getDatabase().getDataSource().getConnection(); PreparedStatement statement = connection.prepareStatement("UPDATE rooms SET users = ? WHERE id = ? LIMIT 1")) {
-            statement.setInt(1, this.currentHabbos.size());
+            statement.setInt(1, this.currentHabbos.size() + this.currentBots.size());
             statement.setInt(2, this.id);
             statement.executeUpdate();
         } catch (SQLException e) {
@@ -2228,7 +2230,8 @@ public class Room implements Comparable<Room>, ISerialize, Runnable {
     }
 
     public int getUserCount() {
-        return this.currentHabbos.size();
+        int liveCount = this.currentHabbos.size() + this.currentBots.size();
+        return Math.max(liveCount, this.dbUserCount);
     }
 
     public ConcurrentHashMap<Integer, Habbo> getCurrentHabbos() {

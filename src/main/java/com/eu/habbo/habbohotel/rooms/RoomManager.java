@@ -1025,6 +1025,27 @@ public class RoomManager {
             }
         }
 
+        // Also load rooms with DB population (e.g. from simulation bots) not yet in activeRooms
+        try (Connection connection = Emulator.getDatabase().getDataSource().getConnection();
+             PreparedStatement statement = connection.prepareStatement("SELECT * FROM rooms WHERE users > 0 ORDER BY users DESC LIMIT ?")) {
+            statement.setInt(1, count);
+            try (ResultSet set = statement.executeQuery()) {
+                while (set.next()) {
+                    int roomId = set.getInt("id");
+                    Room room = this.activeRooms.get(roomId);
+                    if (room == null) {
+                        room = new Room(set);
+                        this.activeRooms.put(roomId, room);
+                    }
+                    if (room.getUserCount() > 0 && !rooms.contains(room)) {
+                        rooms.add(room);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.error("Caught SQL exception loading popular rooms from DB", e);
+        }
+
         if (rooms.isEmpty()) {
             return rooms;
         }

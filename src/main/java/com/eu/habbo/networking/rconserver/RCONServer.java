@@ -56,6 +56,10 @@ public class RCONServer extends Server {
         this.addRCONMessage("modticket", CreateModToolTicket.class);
         this.addRCONMessage("talkuser", TalkUser.class);
         this.addRCONMessage("talkbot", TalkBot.class);
+        this.addRCONMessage("botdance", BotDance.class);
+        this.addRCONMessage("botaction", BotAction.class);
+        this.addRCONMessage("botshout", BotShout.class);
+        this.addRCONMessage("boteffect", BotEffect.class);
         this.addRCONMessage("changeroomowner", ChangeRoomOwner.class);
         this.addRCONMessage("muteuser", MuteUser.class);
         this.addRCONMessage("giverespect", GiveRespect.class);
