@@ -1,19 +1,25 @@
-FROM maven:latest AS builder
 
-# Copy the Emulator sources to the container
+# Build stage
+FROM maven:3.9-eclipse-temurin-8 AS builder
+
+WORKDIR /app
+
+# Copy Maven project
 COPY . .
-# Package it
-RUN mvn package && mv /target/Habbo*-with-dependencies.jar /target/Habbo.jar
 
-# Use Java 8 for running
-FROM java:8 AS runner
+# Compile the emulator
+RUN mvn -B package \
+    && JAR_FILE="$(find target -maxdepth 1 -type f -name 'Habbo*-with-dependencies.jar' -print -quit)" \
+    && test -n "$JAR_FILE" \
+    && cp "$JAR_FILE" /app/Habbo.jar
 
-# Copy the generated source
-COPY --from=builder /target/Habbo.jar /
+# Runtime stage
+FROM eclipse-temurin:8-jre
 
-# Save the script to wait for the database, among running the Arcturus Emulator
-RUN echo "#!/bin/bash \n java -Dfile.encoding=UTF-8 -jar /Habbo.jar" > /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+WORKDIR /
 
-# Run the Emulator with Java
-ENTRYPOINT ["/entrypoint.sh"]
+# Copy compiled emulator
+COPY --from=builder /app/Habbo.jar /Habbo.jar
+
+# Start emulator
+ENTRYPOINT ["java", "-Dfile.encoding=UTF-8", "-jar", "/Habbo.jar"]
